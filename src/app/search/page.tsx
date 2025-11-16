@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import Header from '@/components/layout/Header'
@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer'
 import Link from 'next/link'
 import { FiSearch } from 'react-icons/fi'
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
   const [query, setQuery] = useState(initialQuery)
@@ -127,5 +127,21 @@ export default function SearchPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow bg-gray-50 flex items-center justify-center">
+          <div className="text-center">Загрузка...</div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 }
