@@ -60,7 +60,7 @@ export async function POST(
           type: 'EVENT_APPROVED',
           title: 'Мероприятие одобрено',
           message: `Ваше мероприятие "${event.title}" было одобрено и опубликовано`,
-          relatedId: event.id,
+          link: `/events/${event.id}`,
         },
       })
 
