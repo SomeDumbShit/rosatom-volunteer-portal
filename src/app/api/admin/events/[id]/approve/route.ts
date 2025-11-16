@@ -82,7 +82,7 @@ export async function POST(
           type: 'EVENT_REJECTED',
           title: 'Мероприятие отклонено',
           message: `Ваше мероприятие "${event.title}" было отклонено${reason ? `: ${reason}` : ''}`,
-          relatedId: event.id,
+          link: `/events/${event.id}`,
         },
       })
 
