@@ -279,7 +279,7 @@ async function main() {
           category,
           published: true,
           videoUrl: videoUrl || null,
-          tags: hashtags ? JSON.stringify(hashtags.split('\n').filter(t => t.trim().startsWith('#'))) : null,
+          tags: hashtags ? JSON.stringify(hashtags.split('\n').filter((t: string) => t.trim().startsWith('#'))) : null,
           speaker: speaker || null,
         },
       })
