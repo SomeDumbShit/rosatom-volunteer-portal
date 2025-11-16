@@ -23,8 +23,8 @@ export async function PATCH(
       select: { role: true },
     })
 
-    if (targetUser?.role === 'ADMIN' && session.user.role === 'MODERATOR') {
-      return NextResponse.json({ error: 'Moderators cannot modify admin users' }, { status: 403 })
+    if (targetUser?.role === 'ADMIN') {
+      return NextResponse.json({ error: 'Cannot modify admin users' }, { status: 403 })
     }
 
     const user = await prisma.user.update({
