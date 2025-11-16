@@ -5,6 +5,17 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
+interface VkProfile {
+  id?: number
+  user_id?: number
+  first_name?: string
+  last_name?: string
+  screen_name?: string
+  email?: string
+  photo_200?: string
+  photo_100?: string
+}
+
 const providers: any[] = [
   CredentialsProvider({
     name: 'credentials',
@@ -56,14 +67,14 @@ if (process.env.VK_CLIENT_ID && process.env.VK_CLIENT_SECRET) {
     VkProvider({
       clientId: process.env.VK_CLIENT_ID,
       clientSecret: process.env.VK_CLIENT_SECRET,
-      profile(profile) {
+      profile(profile: VkProfile) {
         return {
-          id: profile.user_id?.toString() || profile.id?.toString(),
+          id: profile.user_id?.toString() || profile.id?.toString() || '',
           name: profile.first_name && profile.last_name
             ? `${profile.first_name} ${profile.last_name}`
-            : profile.screen_name,
+            : profile.screen_name || 'VK User',
           email: profile.email || `vk${profile.user_id || profile.id}@vk.com`,
-          image: profile.photo_200 || profile.photo_100,
+          image: profile.photo_200 || profile.photo_100 || '',
         }
       },
     })
