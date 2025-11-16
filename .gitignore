@@ -1,0 +1,78 @@
+# Dependencies
+node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
+.env*.local
+
+# Vercel
+.vercel
+
+# Typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+prisma/migrations
+prisma/dev.db
+prisma/dev.db-journal
+
+# Uploads
+/public/uploads
+
+# Documentation and temporary files
+CLAUDE.md
+CHANGES_REPORT.md
+CHECKLIST.md
+DEPLOYMENT_GUIDE.md
+FINAL_REPORT.md
+GEMINI.md
+HACKATHON_IMPLEMENTATION_REPORT.md
+MAP_CHANGES_SUMMARY.md
+PROJECT_STRUCTURE.md
+README_DEPLOY.md
+READY_TO_DEMO.md
+ПРЕЗЕНТАЦИЯ_ЗАЩИТА.md
+ЧЕКЛИСТ_ДЕПЛОЙ.md
+/docs/
+
+# Excel and office files
+*.xlsx
+*.xlsm
+*.xls
+
+# PDF files
+*.pdf
+
+# Scripts used for data preparation
+/scripts/
+
+# Claude settings
+/.claude/
+
+# Cyrillic named folders
+/База Знаний/
+/Список НКО/
+/брендбук росатома/
+/логотип росатома/
