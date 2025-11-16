@@ -186,11 +186,37 @@ export default function ResourcesPage() {
                     </div>
                     <h3 className="font-bold text-lg mb-2 line-clamp-2">{article.title}</h3>
                     {article.speaker && (
-                      <p className="text-sm text-gray-500 mb-1">Спикер: {article.speaker}</p>
+                      <p className="text-sm text-gray-500 mb-2">Спикер: {article.speaker}</p>
                     )}
                     {article.excerpt && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{article.excerpt}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">{article.excerpt}</p>
                     )}
+                    {/* Tags */}
+                    {article.tags && (() => {
+                      try {
+                        const tags = typeof article.tags === 'string' ? JSON.parse(article.tags) : article.tags
+                        if (tags && tags.length > 0) {
+                          return (
+                            <div className="flex gap-1.5 flex-wrap mt-3">
+                              {tags.slice(0, 3).map((tag: string, idx: number) => (
+                                <span
+                                  key={idx}
+                                  className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {tags.length > 3 && (
+                                <span className="text-xs text-gray-500">+{tags.length - 3}</span>
+                              )}
+                            </div>
+                          )
+                        }
+                      } catch (e) {
+                        return null
+                      }
+                      return null
+                    })()}
                   </div>
                 </Link>
               ))}

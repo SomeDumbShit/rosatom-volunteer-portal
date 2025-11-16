@@ -79,9 +79,7 @@ const CATEGORY_MAPPING: Record<string, string[]> = {
   'Здоровье и спорт': ['health', 'sports'],
   'Образование и наука': ['education'],
   'Культура и искусство': ['culture'],
-  'Культура и образование': ['culture', 'education'],
   'Помощь животным': ['animals'],
-  'Защита животных': ['animals'],
   'Патриотическое воспитание': ['patriotic'],
   'Другое': ['social'],
 }
@@ -174,12 +172,23 @@ async function main() {
     },
   })
 
-  // Load NGO data from COMPLETE JSON (all 24 NGOs from all sheets)
-  console.log('Loading COMPLETE NGO data from JSON (all sheets)...')
-  const ngoDataPath = path.join(process.cwd(), 'scripts', 'all-ngo-data-complete.json')
-  const validNGOs = JSON.parse(fs.readFileSync(ngoDataPath, 'utf-8'))
+  // Load NGO data from JSON
+  console.log('Loading NGO data from JSON...')
+  const ngoDataPath = path.join(process.cwd(), 'scripts', 'ngo-data.json')
+  const ngoDataRaw = JSON.parse(fs.readFileSync(ngoDataPath, 'utf-8'))
 
-  console.log(`Found ${validNGOs.length} valid NGOs to import from all sheets...`)
+  // Filter out header rows and empty entries - IMPROVED FILTERING
+  const validNGOs = ngoDataRaw.filter((item: any) =>
+    item._sheetName &&
+    item.__EMPTY_1 &&
+    item.__EMPTY_1.trim().length > 3 &&
+    item.__EMPTY_1 !== 'Название организации' &&
+    item.__EMPTY !== 'Деятельность НКО' &&
+    !item.__EMPTY_1.startsWith('Деятельность') &&
+    !item.__EMPTY_1.startsWith('Название')
+  )
+
+  console.log(`Found ${validNGOs.length} valid NGOs to import...`)
 
   // Create NGOs
   let ngoCount = 0
@@ -188,15 +197,12 @@ async function main() {
   for (const ngoData of validNGOs) {
     try {
       const sheetName = ngoData._sheetName
-      const orgName = ngoData['Название организации']?.trim()
-      const description = (ngoData['Про организацию'] || 'Описание организации').substring(0, 2000)
-      const socialLink = ngoData['Ссылка на социальные сети'] || ''
-      const activityType = ngoData['Деятельность НКО'] || 'Социальная помощь'
+      const orgName = ngoData.__EMPTY_1?.trim()
+      const description = (ngoData.__EMPTY_2 || 'Описание организации').substring(0, 2000)
+      const socialLink = ngoData.__EMPTY_3 || ngoData['Ссылка на социальные сети'] || ''
+      const activityType = ngoData.__EMPTY || ngoData['Деятельность НКО'] || 'Социальная помощь'
 
-      if (!orgName || orgName.length < 3) {
-        console.log(`Skipping NGO with invalid name: ${orgName}`)
-        continue
-      }
+      if (!orgName || orgName.length < 3) continue
 
       // Get city info from sheet name
       const cityInfo = CITY_COORDINATES[sheetName] || { lat: 55.7558, lng: 37.6173, cityName: sheetName.split(',')[0].trim() }
@@ -210,8 +216,6 @@ async function main() {
       const baseEmail = slugify(orgName).substring(0, 15)
       const email = `${baseEmail}-${ngoCount}@ngo.ru`
       const userPassword = await bcrypt.hash('password123', 10)
-
-      console.log(`Creating NGO: ${orgName} in ${cityName}`)
 
       const user = await prisma.user.create({
         data: {
@@ -249,11 +253,11 @@ async function main() {
       createdNGOs.push({ ngo, cityName, categories: categorySlug })
       ngoCount++
     } catch (error) {
-      console.error(`Error creating NGO: ${ngoData['Название организации']}`, error)
+      console.error(`Error creating NGO: ${ngoData.__EMPTY_1}`, error)
     }
   }
 
-  console.log(`✅ Created ${ngoCount} NGOs from COMPLETE real data (all sheets)!`)
+  console.log(`✅ Created ${ngoCount} NGOs from real data!`)
 
   // Create events for NGOs
   console.log('Creating events for NGOs...')
@@ -345,44 +349,33 @@ async function main() {
   let articleCount = 0
   for (const articleData of validArticles) {
     try {
-      let title = articleData['Название курса'] || articleData['Тема'] || 'Без названия'
-      let theme = articleData['Тема'] || ''
+      const title = articleData['Название курса'] || articleData['Тема'] || 'Без названия'
+      const theme = articleData['Тема'] || ''
       const speaker = articleData['Спикер'] || ''
       const videoUrl = articleData['Ссылка на видео'] || ''
-      const hashtagsRaw = articleData['Хэштеги:\n(чтобы сделать поиск по хештегу - копируй хэштег, нажимай ctrl+F или ""поиск по странице"" и вставляй скопированный тег)'] || ''
+      const hashtags = articleData['Хэштеги:\n(чтобы сделать поиск по хештегу - копируй хэштег, нажимай ctrl+F или ""поиск по странице"" и вставляй скопированный тег)'] || ''
 
       if (!title || title.length < 3) continue
-
-      // Extract all hashtags from title, theme, and hashtags field
-      const allText = `${title} ${theme} ${hashtagsRaw}`
-      const hashtagMatches = allText.match(/#[а-яА-ЯёЁa-zA-Z0-9_]+/g) || []
-      const uniqueHashtags = [...new Set(hashtagMatches.map(h => h.toLowerCase()))]
-
-      // Remove hashtags from title
-      title = title.replace(/#[а-яА-ЯёЁa-zA-Z0-9_]+/g, '').replace(/\s+/g, ' ').trim()
-
-      // Remove hashtags from theme but keep structure
-      theme = theme.replace(/#[а-яА-ЯёЁa-zA-Z0-9_]+/g, '').replace(/\s+/g, ' ').trim()
 
       // Convert Rutube private link to embed
       const embedUrl = videoUrl ? convertRutubeToEmbed(videoUrl) : null
 
       // Determine category from hashtags
       let category = 'ngo'
-      const hashtagString = uniqueHashtags.join(' ')
-      if (hashtagString.includes('#волонтерство') || theme.includes('волонтер')) category = 'volunteers'
-      if (hashtagString.includes('#соц_пред') || hashtagString.includes('#соц_проекты')) category = 'ngo'
-      if (hashtagString.includes('#фандрайзинг')) category = 'ngo'
-      if (hashtagString.includes('#гранты')) category = 'ngo'
+      if (hashtags.includes('#волонтерство') || theme.includes('волонтер')) category = 'volunteers'
+      if (hashtags.includes('#соц_пред') || hashtags.includes('#соц_проекты')) category = 'ngo'
+      if (hashtags.includes('#фандрайзинг')) category = 'ngo'
+      if (hashtags.includes('#гранты')) category = 'ngo'
 
       // Create excerpt from theme
       let excerpt = theme.split('\n\n')[0].substring(0, 200)
       if (!excerpt) excerpt = title.substring(0, 200)
 
-      // Create content without hashtags in body
+      // Create content
       let content = `# ${title}\n\n`
       if (speaker) content += `**Спикер:** ${speaker}\n\n`
       content += `${theme}\n\n`
+      if (hashtags) content += `\n\n**Теги:** ${hashtags.replace(/\n/g, ' ')}`
 
       await prisma.article.create({
         data: {
@@ -394,7 +387,7 @@ async function main() {
           category,
           published: true,
           videoUrl: embedUrl, // Use converted embed URL
-          tags: uniqueHashtags.length > 0 ? JSON.stringify(uniqueHashtags) : null,
+          tags: hashtags ? JSON.stringify(hashtags.split('\n').filter((t: string) => t.trim().startsWith('#'))) : null,
           speaker: speaker || null,
         },
       })

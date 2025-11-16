@@ -79,6 +79,18 @@ export async function POST(request: Request) {
       )
     }
 
+    // Verify user exists in database
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Пользователь не найден в базе данных' },
+        { status: 404 }
+      )
+    }
+
     const body = await request.json()
     const validatedData = ngoSchema.parse(body)
 
@@ -107,7 +119,7 @@ export async function POST(request: Request) {
     const ngo = await prisma.nGO.create({
       data: {
         ...serializeNGO(validatedData),
-        userId: session.user.id,
+        userId: user.id,
         status: 'PENDING',
       },
     })

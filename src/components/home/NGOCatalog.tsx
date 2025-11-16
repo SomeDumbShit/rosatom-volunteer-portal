@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { FiMapPin } from 'react-icons/fi'
@@ -19,10 +20,31 @@ interface Props {
 }
 
 export default function NGOCatalog({ limit = 8 }: Props) {
+  const [selectedCity, setSelectedCity] = useState<string>('')
+
+  useEffect(() => {
+    // Load selected city from localStorage
+    const savedCity = localStorage.getItem('selectedCity')
+    if (savedCity) {
+      setSelectedCity(savedCity)
+    }
+
+    // Listen to city changes
+    const handleCityChange = (event: CustomEvent) => {
+      setSelectedCity(event.detail || '')
+    }
+
+    window.addEventListener('cityChanged' as any, handleCityChange)
+    return () => window.removeEventListener('cityChanged' as any, handleCityChange)
+  }, [])
+
   const { data: ngos, isLoading } = useQuery<NGO[]>({
-    queryKey: ['ngos-catalog', limit],
+    queryKey: ['ngos-catalog', limit, selectedCity],
     queryFn: async () => {
-      const res = await fetch(`/api/ngo?limit=${limit}`)
+      const url = selectedCity
+        ? `/api/ngo?limit=${limit}&city=${encodeURIComponent(selectedCity)}`
+        : `/api/ngo?limit=${limit}`
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch NGOs')
       return res.json()
     },
